@@ -241,7 +241,7 @@ class LLMEngine:
             "override_neuron_config=%s, "
             "rope_scaling=%r, rope_theta=%r, tokenizer_revision=%s, "
             "trust_remote_code=%s, dtype=%s, max_seq_len=%d, "
-            "return_hidden_states=%s, download_dir=%r, "
+            "return_hidden_states=%s, "
             "download_dir=%r, load_format=%s, tensor_parallel_size=%d, "
             "pipeline_parallel_size=%d, "
             "disable_custom_all_reduce=%s, quantization=%s, "
@@ -1044,17 +1044,18 @@ class LLMEngine:
         if has_multiple_outputs:
             assert self.scheduler_config.is_multi_step or \
                      self.speculative_config
-            # Organize outputs by [step][sequence group] instead of
-            # [sequence group][step].
-            outputs_by_sequence_group = create_output_by_sequence_group(
-                outputs, num_seq_groups=len(seq_group_metadata_list), 
-                scheduled_seq_groups=scheduler_outputs.scheduled_seq_groups,
-                return_hidden_states=self.model_config.return_hidden_states)
             # We have outputs for multiple steps submitted in a single burst,
             # so invalidate is_first_step_output.
             is_first_step_output = None
         else:
             outputs_by_sequence_group = outputs
+        
+        # Organize outputs by [step][sequence group] instead of
+        # [sequence group][step].
+        outputs_by_sequence_group = create_output_by_sequence_group(
+            outputs, num_seq_groups=len(seq_group_metadata_list), 
+            scheduled_seq_groups=scheduler_outputs.scheduled_seq_groups,
+            return_hidden_states=self.model_config.return_hidden_states)
 
         # Determine the requests we need to operate on
         if request_id:
@@ -1088,11 +1089,7 @@ class LLMEngine:
                 finished_before.append(i)
                 continue
 
-            output: List[SequenceGroupOutput]
-            if has_multiple_outputs:
-                output = outputs_by_sequence_group[i]
-            else:
-                output = [outputs_by_sequence_group[0][i]]
+            output = outputs_by_sequence_group[i]
 
             if not is_async:
                 if self.scheduler_config.is_multi_step:
