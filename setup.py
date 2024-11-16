@@ -483,7 +483,7 @@ if _no_device():
     ext_modules = []
 
 setup(
-    name="vllm",
+    name="vllm_mi",
     version=get_vllm_version(),
     author="vLLM Team",
     license="Apache 2.0",

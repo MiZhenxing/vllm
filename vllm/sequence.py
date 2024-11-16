@@ -399,6 +399,7 @@ class Sequence:
         from_decoder_prompt: Construct Sequence from SingletonInputs decoder
                              prompt (True) or encoder prompt (False.) Must be
                              True for decoder-only model.
+        hidden_states: Model hidden states for sequence.
 
     """
 
@@ -411,6 +412,7 @@ class Sequence:
         lora_request: Optional[LoRARequest] = None,
         prompt_adapter_request: Optional[PromptAdapterRequest] = None,
         from_decoder_prompt: bool = True,
+        hidden_states: Optional[torch.Tensor] = None,
     ) -> None:
         self.seq_id = seq_id
         self.inputs = inputs
@@ -419,6 +421,7 @@ class Sequence:
         self.lora_request = lora_request
         self.prompt_adapter_request = prompt_adapter_request
         self.from_decoder_prompt = from_decoder_prompt
+        self.hidden_states = hidden_states
 
         # For decoder-only models, a Sequence is constructed
         # from an DecoderOnlyInputs instance (the `inputs` arg.)
@@ -662,6 +665,7 @@ class SequenceGroup:
                      unless you are working with an encoder/decoder model.
         trace_headers: OpenTelemetry trace headers.
         prompt_adapter_request: Prompt Adapter request.
+        prompt_hidden_states: Hidden states of the prompt of the sequence group.
         priority: User-defined priority of the request.
     """
 
@@ -677,6 +681,7 @@ class SequenceGroup:
         encoder_seq: Optional[Sequence] = None,
         trace_headers: Optional[Mapping[str, str]] = None,
         prompt_adapter_request: Optional[PromptAdapterRequest] = None,
+        prompt_hidden_states: Optional[torch.Tensor] = None,
         priority: int = 0,
     ) -> None:
         self.request_id = request_id
@@ -699,6 +704,7 @@ class SequenceGroup:
         self.prompt_adapter_request = prompt_adapter_request
         self.encoder_seq = encoder_seq
         self.trace_headers = trace_headers
+        self.prompt_hidden_states = prompt_hidden_states
         self.priority = priority
 
         self.cached_request_output = None
@@ -1129,6 +1135,8 @@ class CompletionSequenceGroupOutput(
     samples: List[SequenceOutput]
     # Prompt logprob for each prompt query token.
     prompt_logprobs: Optional[PromptLogprobs]
+    prompt_hidden_states: Optional[torch.Tensor] = None
+    hidden_state: Optional[torch.Tensor] = None
 
     def __repr__(self) -> str:
         return (f"CompletionSequenceGroupOutput(samples={self.samples}, "
