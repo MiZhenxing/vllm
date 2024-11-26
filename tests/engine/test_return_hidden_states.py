@@ -98,3 +98,6 @@ def test_return_hidden_states(model: str):
     assert request2_out.outputs[0].hidden_states.shape[0] == 3
     assert torch.equal(request2_hidden_states,
                        request2_out.outputs[0].hidden_states[:2])
+
+if __name__ == "__main__":
+    test_return_hidden_states("facebook/opt-125m")
